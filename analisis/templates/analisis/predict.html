@@ -1,0 +1,11 @@
+<!-- templates/analisis/predict.html -->
+<h2>Prediksi Sentimen</h2>
+<form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">Prediksi</button>
+</form>
+
+{% if hasil %}
+    <h3>Hasil Prediksi: <strong>{{ hasil|upper }}</strong></h3>
+{% endif %}

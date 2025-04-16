@@ -1,0 +1,63 @@
+<h2>Data Ulasan</h2>
+
+<h3>Tambah Manual</h3>
+<form method="post">
+    {% csrf_token %}
+    {{ ulasan_form.as_p }}
+    <button type="submit" name="submit_manual">Simpan</button>
+</form>
+
+<h3>Import CSV</h3>
+<form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    {{ csv_form.as_p }}
+    <button type="submit" name="submit_csv">Import</button>
+</form>
+<hr>
+<form id="update-form" method="post" action="{% url 'update_model' %}">
+    {% csrf_token %}
+    <button type="submit" id="update-btn">🔄 Update Model dari Database</button>
+</form>
+
+<p id="loading-msg" style="display: none; color: orange;">🔄 Sedang memproses... Mohon tunggu.</p>
+
+
+{% if messages %}
+    {% for message in messages %}
+        <p style="color: green">{{ message }}</p>
+    {% endfor %}
+{% endif %}
+
+<hr>
+<h3>Semua Ulasan</h3>
+<table border="1">
+    <thead>
+        <tr>
+            <th>Tanggal</th>
+            <th>Ulasan</th>
+            <th>Label</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for row in data %}
+            <tr>
+                <td>{{ row.tanggal|date:"Y-m-d H:i" }}</td>
+                <td>{{ row.teks }}</td>
+                <td>{{ row.label|title }}</td>
+            </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<script>
+    const form = document.getElementById('update-form');
+    const btn = document.getElementById('update-btn');
+    const loading = document.getElementById('loading-msg');
+
+    form.addEventListener('submit', function () {
+        btn.disabled = true;
+        btn.textContent = '⏳ Memproses...';
+        loading.style.display = 'block';
+    });
+</script>
+

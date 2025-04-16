@@ -1,0 +1,34 @@
+<!-- templates/analisis/dashboard.html -->
+<h2>Dashboard Analisis Sentimen</h2>
+
+<div>
+    <p><strong>Total Ulasan:</strong> {{ jumlah_total }}</p>
+    <p><strong>Positif:</strong> {{ jumlah_positif }}</p>
+    <p><strong>Negatif:</strong> {{ jumlah_negatif }}</p>
+</div>
+
+<canvas id="sentimenChart" width="400" height="200"></canvas>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    const ctx = document.getElementById('sentimenChart');
+    const myChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: ['Positif', 'Negatif'],
+            datasets: [{
+                label: 'Jumlah Sentimen',
+                data: [{{ jumlah_positif }}, {{ jumlah_negatif }}],
+                backgroundColor: ['#4caf50', '#f44336'],
+                borderColor: ['#388e3c', '#d32f2f'],
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: { beginAtZero: true }
+            }
+        }
+    });
+</script>
