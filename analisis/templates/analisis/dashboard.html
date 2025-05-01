@@ -1,34 +1,71 @@
 <!-- templates/analisis/dashboard.html -->
-<h2>Dashboard Analisis Sentimen</h2>
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>Dashboard Sentimen Barbershop</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
 
-<div>
-    <p><strong>Total Ulasan:</strong> {{ jumlah_total }}</p>
-    <p><strong>Positif:</strong> {{ jumlah_positif }}</p>
-    <p><strong>Negatif:</strong> {{ jumlah_negatif }}</p>
-</div>
+    <!-- Google Font + Tailwind CDN -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-<canvas id="sentimenChart" width="400" height="200"></canvas>
-
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script>
-    const ctx = document.getElementById('sentimenChart');
-    const myChart = new Chart(ctx, {
-        type: 'bar',
-        data: {
-            labels: ['Positif', 'Negatif'],
-            datasets: [{
-                label: 'Jumlah Sentimen',
-                data: [{{ jumlah_positif }}, {{ jumlah_negatif }}],
-                backgroundColor: ['#4caf50', '#f44336'],
-                borderColor: ['#388e3c', '#d32f2f'],
-                borderWidth: 1
-            }]
-        },
-        options: {
-            responsive: true,
-            scales: {
-                y: { beginAtZero: true }
-            }
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
         }
-    });
-</script>
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen p-6">
+    {% include "analisis/navbar.html" %}
+
+    <div class="max-w-5xl mx-auto">
+        <h1 class="text-3xl font-semibold text-gray-800 mb-4">📊 Dashboard Analisis Sentimen</h1>
+
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+            <div class="bg-white rounded-xl shadow p-4">
+                <h2 class="text-sm text-gray-500">Total Ulasan</h2>
+                <p class="text-2xl font-bold text-blue-600">{{ jumlah_total }}</p>
+            </div>
+            <div class="bg-white rounded-xl shadow p-4">
+                <h2 class="text-sm text-gray-500">Sentimen Positif</h2>
+                <p class="text-2xl font-bold text-green-600">{{ jumlah_positif }}</p>
+            </div>
+            <div class="bg-white rounded-xl shadow p-4">
+                <h2 class="text-sm text-gray-500">Sentimen Negatif</h2>
+                <p class="text-2xl font-bold text-red-600">{{ jumlah_negatif }}</p>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow p-6">
+            <h2 class="text-xl font-semibold mb-4 text-gray-700">Distribusi Sentimen</h2>
+            <canvas id="sentimenChart" height="120"></canvas>
+        </div>
+    </div>
+
+    <script>
+        const ctx = document.getElementById('sentimenChart');
+        const sentimenChart = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Positif', 'Negatif'],
+                datasets: [{
+                    label: 'Jumlah Sentimen',
+                    data: [{{ jumlah_positif }}, {{ jumlah_negatif }}],
+                    backgroundColor: ['#34d399', '#f87171'],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'bottom'
+                    }
+                }
+            }
+        });
+    </script>
+</body>
+</html>

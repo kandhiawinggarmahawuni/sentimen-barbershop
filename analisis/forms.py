@@ -4,9 +4,10 @@ from .models import Ulasan
 class UlasanForm(forms.ModelForm):
     class Meta:
         model = Ulasan
-        fields = ['teks']
+        fields = ['teks', 'label']
         widgets = {
-            'teks': forms.Textarea(attrs={'rows': 3, 'class': 'form-control', 'placeholder': 'Masukkan ulasan'})
+            'teks': forms.Textarea(attrs={'class': 'border rounded p-2 w-full', 'rows': 3}),
+            'label': forms.Select(attrs={'class': 'border rounded p-2 w-full'})
         }
 
 class CSVUploadForm(forms.Form):

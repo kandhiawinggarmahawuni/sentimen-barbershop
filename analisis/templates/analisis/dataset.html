@@ -1,63 +1,115 @@
-<h2>Data Ulasan</h2>
+<!-- templates/analisis/dataset.html -->
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>Data Ulasan</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
 
-<h3>Tambah Manual</h3>
-<form method="post">
-    {% csrf_token %}
-    {{ ulasan_form.as_p }}
-    <button type="submit" name="submit_manual">Simpan</button>
-</form>
+    <!-- Tailwind CSS + Font -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+    </style>
+</head>
+<body class="bg-gray-100 p-6">
+    {% include "analisis/navbar.html" %}
 
-<h3>Import CSV</h3>
-<form method="post" enctype="multipart/form-data">
-    {% csrf_token %}
-    {{ csv_form.as_p }}
-    <button type="submit" name="submit_csv">Import</button>
-</form>
-<hr>
-<form id="update-form" method="post" action="{% url 'update_model' %}">
-    {% csrf_token %}
-    <button type="submit" id="update-btn">🔄 Update Model dari Database</button>
-</form>
+    <div class="max-w-6xl mx-auto space-y-8">
 
-<p id="loading-msg" style="display: none; color: orange;">🔄 Sedang memproses... Mohon tunggu.</p>
+        <h1 class="text-3xl font-bold text-gray-800">📋 Data Ulasan</h1>
 
+        {% if messages %}
+            {% for message in messages %}
+                <div class="p-4 rounded bg-green-100 text-green-800">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
 
-{% if messages %}
-    {% for message in messages %}
-        <p style="color: green">{{ message }}</p>
-    {% endfor %}
-{% endif %}
+        <!-- Form Tambah Manual -->
+        <div class="bg-white shadow-md rounded p-6">
+            <h2 class="text-xl font-semibold mb-3 text-gray-700">➕ Tambah Ulasan Manual</h2>
+            <form method="post">
+                {% csrf_token %}
+                {{ ulasan_form.as_p }}
+                <button type="submit" name="submit_manual" class="mt-4 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+                    Simpan
+                </button>
+            </form>            
+        </div>
 
-<hr>
-<h3>Semua Ulasan</h3>
-<table border="1">
-    <thead>
-        <tr>
-            <th>Tanggal</th>
-            <th>Ulasan</th>
-            <th>Label</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for row in data %}
-            <tr>
-                <td>{{ row.tanggal|date:"Y-m-d H:i" }}</td>
-                <td>{{ row.teks }}</td>
-                <td>{{ row.label|title }}</td>
-            </tr>
-        {% endfor %}
-    </tbody>
-</table>
+        <!-- Form Import CSV -->
+        <div class="bg-white shadow-md rounded p-6">
+            <h2 class="text-xl font-semibold mb-3 text-gray-700">📂 Import Dataset (CSV)</h2>
+            <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                <input type="file" name="file" accept=".csv" class="border rounded p-2 w-full sm:w-1/2">
+                <button type="submit" name="submit_csv" class="mt-2 bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">
+                    Import
+                </button>
+            </form>
+        </div>
 
-<script>
-    const form = document.getElementById('update-form');
-    const btn = document.getElementById('update-btn');
-    const loading = document.getElementById('loading-msg');
+        <!-- Tombol Update Model -->
+        <div class="bg-white shadow-md rounded p-6">
+            <h2 class="text-xl font-semibold mb-3 text-gray-700">⚙️ Update Model</h2>
+            <form id="update-form" method="post" action="{% url 'update_model' %}">
+                {% csrf_token %}
+                <button type="submit" id="update-btn" class="bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700">
+                    🔄 Update Model dari Database
+                </button>
+                <p id="loading-msg" class="mt-2 text-orange-600 hidden">⏳ Sedang memproses... Mohon tunggu.</p>
+            </form>
+        </div>
 
-    form.addEventListener('submit', function () {
-        btn.disabled = true;
-        btn.textContent = '⏳ Memproses...';
-        loading.style.display = 'block';
-    });
-</script>
+        <!-- Tabel Data -->
+        <div class="bg-white shadow-md rounded p-6 overflow-x-auto">
+            <h2 class="text-xl font-semibold mb-3 text-gray-700">📑 Semua Data</h2>
+            <table class="w-full table-auto text-left text-sm border-collapse">
+                <thead>
+                    <tr class="bg-gray-200 text-gray-600">
+                        <th class="p-3 border">Tanggal</th>
+                        <th class="p-3 border">Ulasan</th>
+                        <th class="p-3 border">Label</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in data %}
+                        <tr class="hover:bg-gray-50 border-t">
+                            <td class="p-3 border text-gray-500">{{ row.tanggal|date:"Y-m-d H:i" }}</td>
+                            <td class="p-3 border">{{ row.teks }}</td>
+                            <td class="p-3 border">
+                                {% if row.label == 'positif' %}
+                                    <span class="px-2 py-1 rounded text-white bg-green-600">
+                                        {{ row.label|title }}
+                                    </span>
+                                {% else %}
+                                    <span class="px-2 py-1 rounded text-white bg-red-600">
+                                        {{ row.label|title }}
+                                    </span>
+                                {% endif %}
+                            </td>
+                            
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
 
+    <!-- Script loading saat update -->
+    <script>
+        const form = document.getElementById('update-form');
+        const btn = document.getElementById('update-btn');
+        const loading = document.getElementById('loading-msg');
+
+        form.addEventListener('submit', function () {
+            btn.disabled = true;
+            btn.textContent = '⏳ Memproses...';
+            loading.classList.remove('hidden');
+        });
+    </script>
+</body>
+</html>

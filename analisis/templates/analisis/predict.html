@@ -1,11 +1,48 @@
 <!-- templates/analisis/predict.html -->
-<h2>Prediksi Sentimen</h2>
-<form method="post">
-    {% csrf_token %}
-    {{ form.as_p }}
-    <button type="submit">Prediksi</button>
-</form>
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>Prediksi Sentimen</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
 
-{% if hasil %}
-    <h3>Hasil Prediksi: <strong>{{ hasil|upper }}</strong></h3>
-{% endif %}
+    <!-- Tailwind CSS + Font -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+    </style>
+</head>
+<body class="bg-gray-100 p-6">
+    {% include "analisis/navbar.html" %}
+
+    <div class="max-w-2xl mx-auto bg-white shadow-md rounded-xl p-6">
+        <h1 class="text-2xl font-bold text-gray-800 mb-4">🧠 Prediksi Sentimen Ulasan</h1>
+
+        <form method="post" class="space-y-4">
+            {% csrf_token %}
+            {{ form.non_field_errors }}
+
+            <div>
+                {{ form.teks.label_tag }}
+                {{ form.teks }}
+            </div>
+
+            <button type="submit" class="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 transition-all">
+                🔍 Prediksi
+            </button>
+        </form>
+
+        {% if hasil %}
+            <div class="mt-6 p-4 rounded-xl 
+                        {% if hasil == 'positif' %} bg-green-100 text-green-800 
+                        {% else %} bg-red-100 text-red-800 {% endif %}">
+                <p class="text-lg font-semibold">
+                    Hasil Prediksi: <span class="uppercase">{{ hasil }}</span>
+                </p>
+            </div>
+        {% endif %}
+    </div>
+
+</body>
+</html>
