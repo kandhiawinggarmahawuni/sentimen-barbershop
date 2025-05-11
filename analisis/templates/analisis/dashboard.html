@@ -16,33 +16,39 @@
             font-family: 'Inter', sans-serif;
         }
     </style>
-</head>
-<body class="bg-gray-100 min-h-screen p-6">
-    {% include "analisis/navbar.html" %}
-
-    <div class="max-w-5xl mx-auto">
-        <h1 class="text-3xl font-semibold text-gray-800 mb-4">📊 Dashboard Analisis Sentimen</h1>
-
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-            <div class="bg-white rounded-xl shadow p-4">
-                <h2 class="text-sm text-gray-500">Total Ulasan</h2>
-                <p class="text-2xl font-bold text-blue-600">{{ jumlah_total }}</p>
-            </div>
-            <div class="bg-white rounded-xl shadow p-4">
-                <h2 class="text-sm text-gray-500">Sentimen Positif</h2>
-                <p class="text-2xl font-bold text-green-600">{{ jumlah_positif }}</p>
-            </div>
-            <div class="bg-white rounded-xl shadow p-4">
-                <h2 class="text-sm text-gray-500">Sentimen Negatif</h2>
-                <p class="text-2xl font-bold text-red-600">{{ jumlah_negatif }}</p>
+    </head>
+    <body class="bg-gray-100 min-h-screen p-6">
+        {% include "analisis/navbar.html" %}
+    
+        <div class="max-w-6xl mx-auto">
+            <h1 class="text-4xl font-semibold text-gray-800 mb-6">📊 Dashboard Analisis Sentimen</h1>
+    
+            <!-- Horizontal layout for chart and cards -->
+            <div class="flex gap-8">
+                <!-- Chart -->
+                <div class="bg-white rounded-xl shadow p-8 flex-1">
+                    <h2 class="text-2xl font-semibold mb-6 text-gray-700">Distribusi Sentimen</h2>
+                    <canvas id="sentimenChart" height="300"></canvas>
+                </div>
+    
+                <!-- Cards -->
+                <div class="flex flex-col flex-1 gap-6">
+                    <div class="bg-white rounded-xl shadow p-6">
+                        <h2 class="text-base text-gray-500">Total Ulasan</h2>
+                        <p class="text-3xl font-bold text-blue-600">{{ jumlah_total }}</p>
+                    </div>
+                    <div class="bg-white rounded-xl shadow p-6">
+                        <h2 class="text-base text-gray-500">Sentimen Positif</h2>
+                        <p class="text-3xl font-bold text-green-600">{{ jumlah_positif }}</p>
+                    </div>
+                    <div class="bg-white rounded-xl shadow p-6">
+                        <h2 class="text-base text-gray-500">Sentimen Negatif</h2>
+                        <p class="text-3xl font-bold text-red-600">{{ jumlah_negatif }}</p>
+                    </div>
+                </div>
             </div>
         </div>
-
-        <div class="bg-white rounded-xl shadow p-6">
-            <h2 class="text-xl font-semibold mb-4 text-gray-700">Distribusi Sentimen</h2>
-            <canvas id="sentimenChart" height="120"></canvas>
-        </div>
-    </div>
+    </body>
 
     <script>
         const ctx = document.getElementById('sentimenChart');
