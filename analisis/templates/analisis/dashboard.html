@@ -1,4 +1,3 @@
-<!-- templates/analisis/dashboard.html -->
 <!DOCTYPE html>
 <html lang="id">
 <head>
@@ -16,50 +15,75 @@
             font-family: 'Inter', sans-serif;
         }
     </style>
-    </head>
-    <body class="bg-gray-100 min-h-screen p-6">
-        {% include "analisis/navbar.html" %}
-    
-        <div class="max-w-6xl mx-auto">
-            <h1 class="text-4xl font-semibold text-gray-800 mb-6">📊 Dashboard Analisis Sentimen</h1>
-    
-            <!-- Horizontal layout for chart and cards -->
-            <div class="flex gap-8">
-                <!-- Chart -->
-                <div class="bg-white rounded-xl shadow p-8 flex-1">
-                    <h2 class="text-2xl font-semibold mb-6 text-gray-700">Distribusi Sentimen</h2>
-                    <canvas id="sentimenChart" height="300"></canvas>
+</head>
+<body class="bg-gray-100 min-h-screen p-6">
+    {% include "analisis/navbar.html" %}
+
+    <div class="max-w-6xl mx-auto">
+        <h1 class="text-4xl font-semibold text-gray-800 mb-6">📊 Dashboard Analisis Sentimen</h1>
+
+        <!-- Horizontal layout for chart and cards -->
+        <div class="flex gap-8">
+            <!-- Chart -->
+            <div class="bg-white rounded-xl shadow p-8 flex-1">
+                <h2 class="text-2xl font-semibold mb-6 text-gray-700">Distribusi Sentimen</h2>
+                <canvas id="sentimenChart" height="300"></canvas>
+            </div>
+
+            <!-- Cards -->
+            <div class="flex flex-col flex-1 gap-6">
+                <div class="bg-white rounded-xl shadow p-6">
+                    <h2 class="text-base text-gray-500">Total Ulasan</h2>
+                    <p class="text-3xl font-bold text-blue-600">{{ jumlah_total }}</p>
                 </div>
-    
-                <!-- Cards -->
-                <div class="flex flex-col flex-1 gap-6">
-                    <div class="bg-white rounded-xl shadow p-6">
-                        <h2 class="text-base text-gray-500">Total Ulasan</h2>
-                        <p class="text-3xl font-bold text-blue-600">{{ jumlah_total }}</p>
-                    </div>
-                    <div class="bg-white rounded-xl shadow p-6">
-                        <h2 class="text-base text-gray-500">Sentimen Positif</h2>
-                        <p class="text-3xl font-bold text-green-600">{{ jumlah_positif }}</p>
-                    </div>
-                    <div class="bg-white rounded-xl shadow p-6">
-                        <h2 class="text-base text-gray-500">Sentimen Negatif</h2>
-                        <p class="text-3xl font-bold text-red-600">{{ jumlah_negatif }}</p>
-                    </div>
+                <div class="bg-white rounded-xl shadow p-6">
+                    <h2 class="text-base text-gray-500">Sentimen Positif</h2>
+                    <p class="text-3xl font-bold text-green-600">{{ jumlah_positif }}</p>
+                </div>
+                <div class="bg-white rounded-xl shadow p-6">
+                    <h2 class="text-base text-gray-500">Sentimen Negatif</h2>
+                    <p class="text-3xl font-bold text-red-600">{{ jumlah_negatif }}</p>
                 </div>
             </div>
         </div>
-    </body>
+
+        <!-- Evaluasi Model -->
+        <div class="bg-white rounded-xl shadow p-8 mt-10">
+            <h2 class="text-2xl font-semibold mb-6 text-gray-700">Evaluasi Model</h2>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
+                <div>
+                    <div class="text-gray-500">Akurasi</div>
+                    <div class="text-2xl font-bold">{{ eval_result.akurasi }}</div>
+                </div>
+                <div>
+                    <div class="text-gray-500">Presisi</div>
+                    <div class="text-2xl font-bold">{{ eval_result.presisi }}</div>
+                </div>
+                <div>
+                    <div class="text-gray-500">Recall</div>
+                    <div class="text-2xl font-bold">{{ eval_result.recall }}</div>
+                </div>
+                <div>
+                    <div class="text-gray-500">F1-Score</div>
+                    <div class="text-2xl font-bold">{{ eval_result.f1 }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <script>
-        const ctx = document.getElementById('sentimenChart');
+        const ctx = document.getElementById('sentimenChart').getContext('2d');
         const sentimenChart = new Chart(ctx, {
             type: 'doughnut',
             data: {
-                labels: ['Positif', 'Negatif'],
+                labels: {{ chart_labels|safe }},
                 datasets: [{
-                    label: 'Jumlah Sentimen',
-                    data: [{{ jumlah_positif }}, {{ jumlah_negatif }}],
-                    backgroundColor: ['#34d399', '#f87171'],
+                    data: {{ chart_data|safe }},
+                    backgroundColor: [
+                        '#22c55e', // green
+                        '#ef4444', // red
+                        '#64748b'  // gray
+                    ],
                     borderWidth: 1
                 }]
             },

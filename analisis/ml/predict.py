@@ -1,5 +1,6 @@
 """
-Modul ini digunakan untuk memprediksi sentimen dari teks ulasan menggunakan model pembelajaran mesin.
+Modul ini digunakan untuk memprediksi sentimen dari teks ulasan menggunakan model pembelajaran mesin,
+serta melakukan evaluasi model (akurasi, presisi, recall, f1-score) pada data uji.
 
 Library yang digunakan:
 1. os:
@@ -19,6 +20,7 @@ Fungsi utama:
 import os
 
 import joblib
+from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
 
 from .preprocess import preprocess_text
 
@@ -70,13 +72,33 @@ def predict_sentiment(text):
 
         # Melakukan prediksi sentimen
         pred = model.predict(vec)
-        print(f"[predict_sentiment] Hasil prediksi: {pred}")
         return pred[0]
-
-    except ValueError as ve:
-        print(f"[predict_sentiment] Input error: {ve}")
-        return "error: input kosong"
 
     except Exception as e:
         print(f"[predict_sentiment] Terjadi error saat prediksi: {e}")
-        return "error: gagal prediksi"
+        return "error"
+
+def evaluate_model(X_test, y_test):
+    """
+    Menghitung akurasi, presisi, recall, dan f1-score model pada data uji.
+
+    Parameter:
+    - X_test: array-like, fitur data uji (sudah di-vectorize)
+    - y_test: array-like, label data uji
+
+    Return:
+    - dict: {'akurasi': ..., 'presisi': ..., 'recall': ..., 'f1': ...}
+    """
+    try:
+        y_pred = model.predict(X_test)
+        return {
+            'akurasi': accuracy_score(y_test, y_pred),
+            'presisi': precision_score(y_test, y_pred, average='weighted', zero_division=0),
+            'recall': recall_score(y_test, y_pred, average='weighted', zero_division=0),
+            'f1': f1_score(y_test, y_pred, average='weighted', zero_division=0),
+        }
+    except Exception as e:
+        print(f"[evaluate_model] Terjadi error saat evaluasi: {e}")
+        return {
+            'akurasi': '-', 'presisi': '-', 'recall': '-', 'f1': '-'
+        }

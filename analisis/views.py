@@ -2,23 +2,44 @@ from django.shortcuts import render, redirect
 from django.contrib import messages
 from analisis.models import Ulasan
 from analisis.forms import UlasanForm, CSVUploadForm
-from analisis.ml.predict import predict_sentiment
+from analisis.ml.predict import predict_sentiment, vectorizer, evaluate_model
 from analisis.ml.create_model import train_and_save_model_from_db
-import csv, io
+import csv
 
 # Dashboard view
 def dashboard(request):
-    ulasan_all = Ulasan.objects.all()
-    jumlah_total = ulasan_all.count()
-    jumlah_positif = ulasan_all.filter(label='positif').count()
-    jumlah_negatif = ulasan_all.filter(label='negatif').count()
+    # Data untuk kartu
+    jumlah_total = Ulasan.objects.count()
+    jumlah_positif = Ulasan.objects.filter(label='positif').count()
+    jumlah_negatif = Ulasan.objects.filter(label='negatif').count()
 
-    context = {
+    # Data untuk chart
+    chart_labels = ['Positif', 'Negatif']
+    chart_data = [
+        jumlah_positif,
+        jumlah_negatif,
+    ]
+
+    # Data evaluasi model
+    queryset = Ulasan.objects.exclude(label__isnull=True)
+    texts = [obj.teks for obj in queryset]
+    labels = [obj.label for obj in queryset]
+    if len(texts) > 10:
+        split = int(0.8 * len(texts))
+        X_test = vectorizer.transform(texts[split:])
+        y_test = labels[split:]
+        eval_result = evaluate_model(X_test, y_test)
+    else:
+        eval_result = {'akurasi': '-', 'presisi': '-', 'recall': '-', 'f1': '-'}
+
+    return render(request, 'analisis/dashboard.html', {
         'jumlah_total': jumlah_total,
         'jumlah_positif': jumlah_positif,
         'jumlah_negatif': jumlah_negatif,
-    }
-    return render(request, 'analisis/dashboard.html', context)
+        'chart_labels': chart_labels,
+        'chart_data': chart_data,
+        'eval_result': eval_result,
+    })
 
 # Predict view
 def predict_view(request):
