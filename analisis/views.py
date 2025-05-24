@@ -2,9 +2,10 @@ from django.shortcuts import render, redirect
 from django.contrib import messages
 from analisis.models import Ulasan
 from analisis.forms import UlasanForm, CSVUploadForm
-from analisis.ml.predict import predict_sentiment, vectorizer, evaluate_model
+from analisis.ml.predict import predict_sentiment, vectorizer, evaluate_model_from_file
 from analisis.ml.create_model import train_and_save_model_from_db
 import csv
+
 
 # Dashboard view
 def dashboard(request):
@@ -19,18 +20,7 @@ def dashboard(request):
         jumlah_positif,
         jumlah_negatif,
     ]
-
-    # Data evaluasi model
-    queryset = Ulasan.objects.exclude(label__isnull=True)
-    texts = [obj.teks for obj in queryset]
-    labels = [obj.label for obj in queryset]
-    if len(texts) > 10:
-        split = int(0.8 * len(texts))
-        X_test = vectorizer.transform(texts[split:])
-        y_test = labels[split:]
-        eval_result = evaluate_model(X_test, y_test)
-    else:
-        eval_result = {'akurasi': '-', 'presisi': '-', 'recall': '-', 'f1': '-'}
+    eval_result = evaluate_model_from_file()
 
     return render(request, 'analisis/dashboard.html', {
         'jumlah_total': jumlah_total,
@@ -40,6 +30,7 @@ def dashboard(request):
         'chart_data': chart_data,
         'eval_result': eval_result,
     })
+
 
 # Predict view
 def predict_view(request):
@@ -52,6 +43,7 @@ def predict_view(request):
     else:
         form = UlasanForm()
     return render(request, 'analisis/predict.html', {'form': form, 'hasil': hasil})
+
 
 # views.py
 def dataset_view(request):
@@ -83,6 +75,7 @@ def dataset_view(request):
         'csv_form': csv_form,
     })
 
+
 def update_model_view(request):
     try:
         train_and_save_model_from_db()  # <-- tidak perlu argumen
@@ -90,4 +83,3 @@ def update_model_view(request):
     except Exception as e:
         messages.error(request, f"Gagal update model: {str(e)}")
     return redirect('dataset')
-

@@ -78,27 +78,27 @@ def predict_sentiment(text):
         print(f"[predict_sentiment] Terjadi error saat prediksi: {e}")
         return "error"
 
-def evaluate_model(X_test, y_test):
+
+def evaluate_model_from_file():
     """
-    Menghitung akurasi, presisi, recall, dan f1-score model pada data uji.
-
-    Parameter:
-    - X_test: array-like, fitur data uji (sudah di-vectorize)
-    - y_test: array-like, label data uji
-
+    Memuat data uji dari file dan melakukan evaluasi model.
     Return:
-    - dict: {'akurasi': ..., 'presisi': ..., 'recall': ..., 'f1': ...}
+        dict: {'akurasi': ..., 'presisi': ..., 'recall': ..., 'f1': ...}
     """
     try:
-        y_pred = model.predict(X_test)
+        base_path = os.path.dirname(os.path.abspath(__file__))
+        X_test_vec, y_test = joblib.load(
+            os.path.join(base_path, "model-ml/test_data.pkl")
+        )
+        y_pred = model.predict(X_test_vec)
         return {
-            'akurasi': accuracy_score(y_test, y_pred),
-            'presisi': precision_score(y_test, y_pred, average='weighted', zero_division=0),
-            'recall': recall_score(y_test, y_pred, average='weighted', zero_division=0),
-            'f1': f1_score(y_test, y_pred, average='weighted', zero_division=0),
+            "akurasi": accuracy_score(y_test, y_pred),
+            "presisi": precision_score(
+                y_test, y_pred, average="weighted", zero_division=0
+            ),
+            "recall": recall_score(y_test, y_pred, average="weighted", zero_division=0),
+            "f1": f1_score(y_test, y_pred, average="weighted", zero_division=0),
         }
     except Exception as e:
-        print(f"[evaluate_model] Terjadi error saat evaluasi: {e}")
-        return {
-            'akurasi': '-', 'presisi': '-', 'recall': '-', 'f1': '-'
-        }
+        print(f"[evaluate_model_from_file] Terjadi error saat evaluasi: {e}")
+        return {"akurasi": "-", "presisi": "-", "recall": "-", "f1": "-"}

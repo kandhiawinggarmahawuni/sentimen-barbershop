@@ -48,6 +48,7 @@ import joblib
 from imblearn.over_sampling import RandomOverSampler
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.naive_bayes import MultinomialNB
+from sklearn.model_selection import train_test_split
 
 from analisis.models import Ulasan
 
@@ -63,20 +64,25 @@ def train_and_save_model_from_db():
     if not texts:
         raise ValueError("Tidak ada data ulasan yang bisa digunakan untuk training.")
 
+    # Split data menjadi train dan test
+    X_train, X_test, y_train, y_test = train_test_split(
+        texts, labels, test_size=0.3, random_state=42, stratify=labels
+    )
+
     # TF-IDF Vectorizer
     vectorizer = TfidfVectorizer()
-    X = vectorizer.fit_transform(texts)
-    y = labels
+    X_train_vec = vectorizer.fit_transform(X_train)
+    X_test_vec = vectorizer.transform(X_test)
 
-    # Oversampling
-    oversampler = RandomOverSampler(random_state=42)
-    X_resampled, y_resampled = oversampler.fit_resample(X, y)
 
     # Training model Naïve Bayes
     model = MultinomialNB()
-    model.fit(X_resampled, y_resampled)
+    model.fit(X_train_vec, y_train)
 
     # Simpan model & vectorizer
     base_path = os.path.dirname(__file__)
     joblib.dump(model, os.path.join(base_path, "model-ml/naivebayes_model.pkl"))
     joblib.dump(vectorizer, os.path.join(base_path, "model-ml/vectorizer.pkl"))
+
+    # simpan data test ke file
+    joblib.dump((X_test_vec, y_test), os.path.join(base_path, "model-ml/test_data.pkl"))
