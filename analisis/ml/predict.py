@@ -23,6 +23,7 @@ import joblib
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
 
 from .preprocess import preprocess_text
+from analisis.ml.utils import to_percentage
 
 # Mendapatkan direktori file saat ini
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -81,7 +82,7 @@ def predict_sentiment(text):
 
 def evaluate_model_from_file():
     """
-    Memuat data uji dari file dan melakukan evaluasi model.
+    Memuat data uji dari file dan melakukan evaluasi model (khusus label positif).
     Return:
         dict: {'akurasi': ..., 'presisi': ..., 'recall': ..., 'f1': ...}
     """
@@ -91,13 +92,31 @@ def evaluate_model_from_file():
             os.path.join(base_path, "model-ml/test_data.pkl")
         )
         y_pred = model.predict(X_test_vec)
+
+        # Hitung akurasi (tetap sama)
+        akurasi = accuracy_score(y_test, y_pred)
+
+        # Fokus ke label "positif" sesuai label dataset
+        presisi = precision_score(y_test, y_pred, pos_label="positif", zero_division=0)
+        recall = recall_score(y_test, y_pred, pos_label="positif", zero_division=0)
+        f1 = f1_score(y_test, y_pred, pos_label="positif", zero_division=0)
+
+        akurasi_persen = to_percentage(akurasi)
+        presisi_persen = to_percentage(presisi)
+        recall_persen = to_percentage(recall)
+        f1_persen = to_percentage(f1)
+
+        # logger evaluasi
+        print(f"akurasi : {akurasi_persen}")
+        print(f"presisi : {presisi_persen}")
+        print(f"recall : {recall_persen}")
+        print(f"f1 : {f1_persen}")
+
         return {
-            "akurasi": accuracy_score(y_test, y_pred),
-            "presisi": precision_score(
-                y_test, y_pred, average="weighted", zero_division=0
-            ),
-            "recall": recall_score(y_test, y_pred, average="weighted", zero_division=0),
-            "f1": f1_score(y_test, y_pred, average="weighted", zero_division=0),
+            "akurasi": akurasi_persen,
+            "presisi": presisi_persen,
+            "recall": recall_persen,
+            "f1": f1_persen,
         }
     except Exception as e:
         print(f"[evaluate_model_from_file] Terjadi error saat evaluasi: {e}")
