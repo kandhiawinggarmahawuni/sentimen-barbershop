@@ -28,11 +28,26 @@ from analisis.ml.utils import to_percentage
 # Mendapatkan direktori file saat ini
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
-# Memuat model Naive Bayes yang telah dilatih
-model = joblib.load(os.path.join(BASE_DIR, "./model-ml/naivebayes_model.pkl"))
+def get_model_path():
+    config_path = os.path.join(BASE_DIR, "model-ml/current_model.txt")
+    if os.path.exists(config_path):
+        with open(config_path) as f:
+            model_name = f.read().strip()
+    else:
+        model_name = "naivebayes_model.pkl"
+    return os.path.join(BASE_DIR, "model-ml", model_name)
 
-# Memuat vectorizer untuk mengubah teks menjadi representasi numerik
-vectorizer = joblib.load(os.path.join(BASE_DIR, "./model-ml/vectorizer.pkl"))
+def get_vectorizer_path():
+    config_path = os.path.join(BASE_DIR, "model-ml/current_vectorizer.txt")
+    if os.path.exists(config_path):
+        with open(config_path) as f:
+            vectorizer_name = f.read().strip()
+    else:
+        vectorizer_name = "vectorizer.pkl"
+    return os.path.join(BASE_DIR, "model-ml", vectorizer_name)
+
+model = joblib.load(get_model_path())
+vectorizer = joblib.load(get_vectorizer_path())
 
 
 def predict_sentiment(text):
@@ -91,6 +106,7 @@ def evaluate_model_from_file():
         X_test_vec, y_test = joblib.load(
             os.path.join(base_path, "model-ml/test_data.pkl")
         )
+        model = joblib.load(os.path.join(BASE_DIR, "./model-ml/naivebayes_model.pkl"))
         y_pred = model.predict(X_test_vec)
 
         # Hitung akurasi (tetap sama)
