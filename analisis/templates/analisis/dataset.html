@@ -35,7 +35,12 @@
             <button id="sync-btn" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
                 Sync & Analisis Sentimen
             </button>
-            <p id="sync-loading" class="mt-2 text-orange-600 hidden">⏳ Sedang mengambil dan menganalisis ulasan dari Google...</p>
+            <div id="sync-loading" class="mt-2 hidden">
+                <p class="text-orange-600">⏳ Sedang mengambil dan menganalisis ulasan dari Google...</p>
+                <p id="sync-timeout-message" class="text-orange-600 mt-2 hidden">
+                    Proses syncronisasi membutuhkan waktu cukup lama, harap bersabar...
+                </p>
+            </div>
         </div>
 
         <!-- Form Tambah Manual -->
@@ -168,6 +173,7 @@
         // Sync reviews script
         const syncBtn = document.getElementById('sync-btn');
         const syncLoading = document.getElementById('sync-loading');
+        const syncTimeoutMessage = document.getElementById('sync-timeout-message');
         const modal = document.getElementById('notification-modal');
         const modalTitle = document.getElementById('modal-title');
         const modalMessage = document.getElementById('modal-message');
@@ -188,6 +194,11 @@
             syncBtn.disabled = true;
             syncLoading.classList.remove('hidden');
             
+            // Show timeout message after 10 seconds
+            const timeoutId = setTimeout(() => {
+                syncTimeoutMessage.classList.remove('hidden');
+            }, 10000);
+            
             try {
                 const response = await fetch('{% url "sync_reviews" %}', {
                     method: 'POST',
@@ -206,8 +217,10 @@
             } catch (error) {
                 showModal('Error', 'Terjadi kesalahan saat sync ulasan');
             } finally {
+                clearTimeout(timeoutId);
                 syncBtn.disabled = false;
                 syncLoading.classList.add('hidden');
+                syncTimeoutMessage.classList.add('hidden');
             }
         });
 

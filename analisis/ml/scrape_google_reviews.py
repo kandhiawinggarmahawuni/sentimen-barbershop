@@ -1,15 +1,13 @@
-from playwright.sync_api import sync_playwright
+from playwright.sync_api import sync_playwright, TimeoutError
 from bs4 import BeautifulSoup
 import pandas as pd
 import time
 
 
-def scroll_with_arrow_keys(page, scroll_count=50):
+def scroll_with_arrow_keys(page, scroll_count=300):
     for _ in range(scroll_count):
         page.keyboard.press("ArrowDown")
         time.sleep(0.2)
-
-
 
 
 def extract_reviews_from_page(page_content):
@@ -35,45 +33,69 @@ def extract_reviews_from_page(page_content):
     return reviews
 
 
-def scrape_google_reviews(map_url, scroll_times=15):
+def scrape_google_reviews(map_url, scroll_times=50):
     with sync_playwright() as p:
-        browser = p.chromium.launch(headless=True)
-        context = browser.new_context(locale='id-ID')  # paksa Bahasa Indonesia
-        page = context.new_page()
-        page.goto(map_url)
-        page.wait_for_timeout(5000)
-
-        # Klik tombol "Ulasan" / "All reviews"
         try:
-            page.click('text="Ulasan"')
-            time.sleep(3)
-        except:
-            pass
+            browser = p.chromium.launch(headless=True)
+            context = browser.new_context(
+                locale='id-ID',  # paksa Bahasa Indonesia
+                viewport={'width': 1920, 'height': 1080}  # Set viewport size
+            )
+            page = context.new_page()
+            
+            # Set timeout lebih lama (60 detik)
+            page.set_default_timeout(60000)
+            
+            # Navigate dengan retry
+            max_retries = 3
+            for attempt in range(max_retries):
+                try:
+                    page.goto(map_url, wait_until='networkidle')
+                    break
+                except TimeoutError:
+                    if attempt == max_retries - 1:
+                        raise
+                    print(f"Retry {attempt + 1}/{max_retries}...")
+                    time.sleep(5)
+            
+            # Tunggu halaman dimuat
+            page.wait_for_load_state('networkidle')
+            time.sleep(5)
 
-        # Klik "Urutkan" → "Terbaru"
-        try:
-            page.click('text="Urutkan"')  # atau 'Sort by' jika English
-            time.sleep(1)
+            # Klik tombol "Ulasan" / "All reviews"
+            try:
+                page.click('text="Ulasan"', timeout=10000)
+                time.sleep(3)
+            except Exception as e:
+                print(f"Gagal klik tombol Ulasan: {e}")
+                pass
 
-            # Ambil elemen berdasarkan urutan dropdown ke-2 (biasanya "Terbaru")
-            terbaru_btn = page.query_selector('div[role="menu"] div[role="menuitemradio"]:nth-child(2)')
-            if terbaru_btn:
-                page.evaluate("(el) => el.click()", terbaru_btn)
-                time.sleep(2)
-            else:
-                print("Selector 'Terbaru' tidak ditemukan.")
+            # Klik "Urutkan" → "Terbaru"
+            try:
+                page.click('text="Urutkan"', timeout=10000)  # atau 'Sort by' jika English
+                time.sleep(1)
+
+                # Ambil elemen berdasarkan urutan dropdown ke-2 (biasanya "Terbaru")
+                terbaru_btn = page.query_selector('div[role="menu"] div[role="menuitemradio"]:nth-child(2)')
+                if terbaru_btn:
+                    page.evaluate("(el) => el.click()", terbaru_btn)
+                    time.sleep(2)
+                else:
+                    print("Selector 'Terbaru' tidak ditemukan.")
+            except Exception as e:
+                print(f"Gagal mengatur urutan ke terbaru: {e}")
+
+            scroll_with_arrow_keys(page, scroll_count=300)
+
+            html = page.content()
+            browser.close()
+            return extract_reviews_from_page(html)
+
         except Exception as e:
-            print("Gagal mengatur urutan ke terbaru:", e)
-
-       
-        scroll_with_arrow_keys(page, scroll_count=100)
-
-        html = page.content()
-        browser.close()
-
-    return extract_reviews_from_page(html)
-
-
+            print(f"Error dalam scrape_google_reviews: {e}")
+            if 'browser' in locals():
+                browser.close()
+            raise
 
 if __name__ == "__main__":
     PLACE_REVIEW_URL = "https://maps.app.goo.gl/JAYDZXsL4wGNSYgC6?g_st=iw"
