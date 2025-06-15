@@ -1,2 +1,5 @@
 analisis/ml/model-ml/current_model.txt
 analisis/ml/model-ml/current_vectorizer.txt
+analisis/ml/model-ml/__pycache__/
+analisis/ml/__pycache__/
+analisis/migrations/__pycache__/

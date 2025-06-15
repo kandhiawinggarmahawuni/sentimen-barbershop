@@ -28,6 +28,16 @@
             {% endfor %}
         {% endif %}
 
+        <!-- Sync Google Reviews -->
+        <div class="bg-white shadow-md rounded p-6">
+            <h2 class="text-xl font-semibold mb-3 text-gray-700">🔄 Sync Google Reviews</h2>
+            <p class="text-sm text-gray-600 mb-3">Ulasan akan otomatis dianalisis sentimennya sebelum disimpan ke database.</p>
+            <button id="sync-btn" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+                Sync & Analisis Sentimen
+            </button>
+            <p id="sync-loading" class="mt-2 text-orange-600 hidden">⏳ Sedang mengambil dan menganalisis ulasan dari Google...</p>
+        </div>
+
         <!-- Form Tambah Manual -->
         <div class="bg-white shadow-md rounded p-6">
             <h2 class="text-xl font-semibold mb-3 text-gray-700">➕ Tambah Ulasan Manual</h2>
@@ -64,6 +74,14 @@
             </form>
         </div>
 
+        <!-- Delete All Button -->
+        <div class="bg-white shadow-md rounded p-6">
+            <h2 class="text-xl font-semibold mb-3 text-gray-700">🗑️ Hapus Data</h2>
+            <button id="delete-all-btn" class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">
+                Hapus Semua Data
+            </button>
+        </div>
+
         <!-- Tabel Data -->
         <div class="bg-white shadow-md rounded p-6 overflow-x-auto">
             <h2 class="text-xl font-semibold mb-3 text-gray-700">📑 Semua Data</h2>
@@ -73,6 +91,7 @@
                         <th class="p-3 border">Tanggal</th>
                         <th class="p-3 border">Ulasan</th>
                         <th class="p-3 border">Label</th>
+                        <th class="p-3 border">Aksi</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -91,7 +110,14 @@
                                     </span>
                                 {% endif %}
                             </td>
-                            
+                            <td class="p-3 border">
+                                <button 
+                                    onclick="confirmDeleteReview({{ row.id }})"
+                                    class="text-red-600 hover:text-red-800"
+                                >
+                                    🗑️ Hapus
+                                </button>
+                            </td>
                         </tr>
                     {% endfor %}
                 </tbody>
@@ -99,8 +125,36 @@
         </div>
     </div>
 
-    <!-- Script loading saat update -->
+    <!-- Notification Modal -->
+    <div id="notification-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center">
+        <div class="bg-white p-6 rounded-lg shadow-xl max-w-md w-full mx-4">
+            <h3 class="text-xl font-semibold mb-4" id="modal-title">Notification</h3>
+            <p id="modal-message" class="mb-6"></p>
+            <button onclick="closeModal()" class="w-full bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+                OK
+            </button>
+        </div>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div id="delete-confirm-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center">
+        <div class="bg-white p-6 rounded-lg shadow-xl max-w-md w-full mx-4">
+            <h3 class="text-xl font-semibold mb-4">Konfirmasi Hapus</h3>
+            <p id="delete-confirm-message" class="mb-6"></p>
+            <div class="flex space-x-4">
+                <button onclick="closeDeleteModal()" class="flex-1 bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600">
+                    Batal
+                </button>
+                <button id="confirm-delete-btn" class="flex-1 bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">
+                    Hapus
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
     <script>
+        // Existing update model script
         const form = document.getElementById('update-form');
         const btn = document.getElementById('update-btn');
         const loading = document.getElementById('loading-msg');
@@ -109,6 +163,118 @@
             btn.disabled = true;
             btn.textContent = '⏳ Memproses...';
             loading.classList.remove('hidden');
+        });
+
+        // Sync reviews script
+        const syncBtn = document.getElementById('sync-btn');
+        const syncLoading = document.getElementById('sync-loading');
+        const modal = document.getElementById('notification-modal');
+        const modalTitle = document.getElementById('modal-title');
+        const modalMessage = document.getElementById('modal-message');
+
+        function showModal(title, message) {
+            modalTitle.textContent = title;
+            modalMessage.textContent = message;
+            modal.classList.remove('hidden');
+        }
+
+        function closeModal() {
+            modal.classList.add('hidden');
+            // Reload page to show updated data
+            window.location.reload();
+        }
+
+        syncBtn.addEventListener('click', async function() {
+            syncBtn.disabled = true;
+            syncLoading.classList.remove('hidden');
+            
+            try {
+                const response = await fetch('{% url "sync_reviews" %}', {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    showModal('Berhasil', data.message);
+                } else {
+                    showModal('Error', data.message);
+                }
+            } catch (error) {
+                showModal('Error', 'Terjadi kesalahan saat sync ulasan');
+            } finally {
+                syncBtn.disabled = false;
+                syncLoading.classList.add('hidden');
+            }
+        });
+
+        // Delete review script
+        const deleteConfirmModal = document.getElementById('delete-confirm-modal');
+        const deleteConfirmMessage = document.getElementById('delete-confirm-message');
+        const confirmDeleteBtn = document.getElementById('confirm-delete-btn');
+        let reviewToDelete = null;
+
+        function confirmDeleteReview(reviewId) {
+            reviewToDelete = reviewId;
+            deleteConfirmMessage.textContent = 'Apakah Anda yakin ingin menghapus ulasan ini?';
+            deleteConfirmModal.classList.remove('hidden');
+        }
+
+        function closeDeleteModal() {
+            deleteConfirmModal.classList.add('hidden');
+            reviewToDelete = null;
+        }
+
+        confirmDeleteBtn.addEventListener('click', async function() {
+            if (!reviewToDelete) return;
+            
+            try {
+                const response = await fetch(`/delete-review/${reviewToDelete}/`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                    }
+                });
+                
+                const data = await response.json();
+                closeDeleteModal();
+                showModal(data.status === 'success' ? 'Berhasil' : 'Error', data.message);
+            } catch (error) {
+                closeDeleteModal();
+                showModal('Error', 'Terjadi kesalahan saat menghapus ulasan');
+            }
+        });
+
+        // Delete all reviews script
+        const deleteAllBtn = document.getElementById('delete-all-btn');
+
+        deleteAllBtn.addEventListener('click', function() {
+            reviewToDelete = 'all';
+            deleteConfirmMessage.textContent = 'Apakah Anda yakin ingin menghapus SEMUA ulasan? Tindakan ini tidak dapat dibatalkan!';
+            deleteConfirmModal.classList.remove('hidden');
+        });
+
+        confirmDeleteBtn.addEventListener('click', async function() {
+            if (reviewToDelete === 'all') {
+                try {
+                    const response = await fetch('/delete-all-reviews/', {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                        }
+                    });
+                    
+                    const data = await response.json();
+                    closeDeleteModal();
+                    showModal(data.status === 'success' ? 'Berhasil' : 'Error', data.message);
+                } catch (error) {
+                    closeDeleteModal();
+                    showModal('Error', 'Terjadi kesalahan saat menghapus ulasan');
+                }
+            }
         });
     </script>
 </body>

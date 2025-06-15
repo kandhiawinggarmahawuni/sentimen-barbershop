@@ -1,10 +1,13 @@
 from django.shortcuts import render, redirect
 from django.contrib import messages
+from django.http import JsonResponse
 from analisis.models import Ulasan
 from analisis.forms import UlasanForm, CSVUploadForm
 from analisis.ml.predict import predict_sentiment, vectorizer, evaluate_model_from_file
 from analisis.ml.create_model import train_and_save_model_from_db
+from analisis.ml.scrape_google_reviews import scrape_google_reviews
 import csv
+import json
 
 
 # Dashboard view
@@ -83,3 +86,100 @@ def update_model_view(request):
     except Exception as e:
         messages.error(request, f"Gagal update model: {str(e)}")
     return redirect('dataset')
+
+
+def sync_google_reviews(request):
+    if request.method == 'POST':
+        try:
+            # Get reviews from Google
+            PLACE_REVIEW_URL = "https://maps.app.goo.gl/JAYDZXsL4wGNSYgC6?g_st=iw"
+            reviews = scrape_google_reviews(PLACE_REVIEW_URL)
+            
+            # Track statistics
+            added_count = 0
+            skipped_count = 0
+            
+            # Process each review
+            for review in reviews:
+                # Check if review already exists
+                if not Ulasan.objects.filter(
+                    teks=review['review'],
+                    nama=review['name'],
+                    rating=review['rating'],
+                    review_date=review['date']
+                ).exists():
+                    # Predict sentiment
+                    sentiment = predict_sentiment(review['review'])
+                    
+                    # Skip if prediction failed
+                    if sentiment == "error":
+                        continue
+                    
+                    # Create new review with predicted sentiment
+                    Ulasan.objects.create(
+                        teks=review['review'],
+                        nama=review['name'],
+                        rating=review['rating'],
+                        review_date=review['date'],
+                        source='google',
+                        label=sentiment  # sentiment is already a string
+                    )
+                    added_count += 1
+                else:
+                    skipped_count += 1
+            
+            return JsonResponse({
+                'status': 'success',
+                'message': f'Berhasil menambahkan {added_count} ulasan baru. {skipped_count} ulasan dilewati karena sudah ada.',
+                'added': added_count,
+                'skipped': skipped_count
+            })
+            
+        except Exception as e:
+            return JsonResponse({
+                'status': 'error',
+                'message': f'Gagal sync ulasan: {str(e)}'
+            }, status=500)
+    
+    return JsonResponse({'status': 'error', 'message': 'Method not allowed'}, status=405)
+
+
+def delete_review(request, review_id):
+    if request.method == 'POST':
+        try:
+            review = Ulasan.objects.get(id=review_id)
+            review.delete()
+            return JsonResponse({
+                'status': 'success',
+                'message': 'Ulasan berhasil dihapus'
+            })
+        except Ulasan.DoesNotExist:
+            return JsonResponse({
+                'status': 'error',
+                'message': 'Ulasan tidak ditemukan'
+            }, status=404)
+        except Exception as e:
+            return JsonResponse({
+                'status': 'error',
+                'message': f'Gagal menghapus ulasan: {str(e)}'
+            }, status=500)
+    
+    return JsonResponse({'status': 'error', 'message': 'Method not allowed'}, status=405)
+
+
+def delete_all_reviews(request):
+    if request.method == 'POST':
+        try:
+            count = Ulasan.objects.count()
+            Ulasan.objects.all().delete()
+            return JsonResponse({
+                'status': 'success',
+                'message': f'Berhasil menghapus {count} ulasan'
+            })
+        except Exception as e:
+            return JsonResponse({
+                'status': 'error',
+                'message': f'Gagal menghapus ulasan: {str(e)}'
+            }, status=500)
+    
+    return JsonResponse({'status': 'error', 'message': 'Method not allowed'}, status=405)
